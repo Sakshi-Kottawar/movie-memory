@@ -2,15 +2,31 @@ import "server-only";
 import OpenAI from "openai";
 
 export async function generateMovieFact(movie: string): Promise<string> {
-  // Development-only mock response
+  // 1. Simulate an OpenAI failure during development
+  // ADD THE NEW CONDITION HERE
+  if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.MOCK_OPENAI === "error"
+  ) {
+    throw new Error("Simulated OpenAI failure");
+  }
+
+  // 2. Mock successful OpenAI response
   if (
     process.env.NODE_ENV !== "production" &&
     process.env.MOCK_OPENAI === "true"
   ) {
+    console.log("Mock OpenAI: Generation started");
+
+    // Simulate a 2-second API delay
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    console.log("Mock OpenAI: Generation completed");
+
     return `Mock fact: ${movie} is a great movie to explore!`;
   }
 
-  // Real OpenAI integration
+  // 3. Real OpenAI integration
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
