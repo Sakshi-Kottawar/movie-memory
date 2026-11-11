@@ -5,12 +5,13 @@ A full-stack movie trivia application built with **Next.js, TypeScript, PostgreS
 **Selected extension: Variant A — Backend-Focused (Caching & Correctness)**
 
 ### Detailed Technical Documentation
+
 For a deeper explanation of the system architecture, authentication flow, PostgreSQL caching, single-flight concurrency, failure recovery, and design tradeoffs, see the [**Detailed Architecture & Design**](docs/ARCHITECTURE.md).
 
 ## Features
 
 - Google OAuth authentication with database-backed sessions
-- First-time onboarding with server-side movie validation
+- First-time onboarding with inline validation errors and server-side input validation
 - Personalized dashboard with Google profile, favorite movie, and logout
 - OpenAI-powered fact generation with PostgreSQL persistence
 - 60-second server-side caching to reduce redundant API calls
@@ -182,7 +183,12 @@ Prisma and OpenAI are mocked in unit tests to keep tests deterministic and avoid
 
 ### With Two More Hours
 
-I would prioritize database-backed or distributed concurrency coordination, broader API integration tests, inline onboarding validation messages, and structured monitoring for generation latency, cache hits, and fallback behavior.
+I would prioritize:
+
+- Database-backed or distributed concurrency coordination
+- Broader API integration tests, including onboarding validation
+- Structured monitoring for cache hits, generation latency, and OpenAI failures
+- Improved accessibility and loading states
 
 ## AI Usage
 

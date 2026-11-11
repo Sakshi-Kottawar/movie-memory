@@ -112,6 +112,21 @@ For movie fact requests, the API identifies the user through the validated sessi
 
 This ensures the application's fact retrieval logic is scoped to the authenticated user.
 
+### Onboarding and Input Validation
+
+First-time authenticated users are redirected to `/onboarding` to select their favorite movie.
+
+The onboarding flow uses a React Client Component (`OnboardingForm.tsx`) with `useActionState` and a Next.js Server Action (`app/onboarding/actions.ts`).
+
+- The form provides browser-level validation using `required`, `minLength`, and `maxLength`.
+- The Server Action independently validates that the movie is a string, trims whitespace, and enforces a length of 2–100 characters.
+- Invalid submissions return an error state that is displayed inline without navigating away from the form.
+- The Server Action identifies the user through the authenticated session rather than accepting a user ID from the client.
+- The favorite movie is saved only if the user's `favoriteMovie` field is currently `NULL`, preventing onboarding from overwriting an existing selection.
+- Successful submissions redirect the user to `/dashboard`.
+
+This approach combines responsive form feedback with server-side validation and user-scoped persistence.
+
 ### 3. Database Design
 
 PostgreSQL is used as the primary persistent data store.
