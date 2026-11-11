@@ -1,23 +1,19 @@
 import { Suspense } from "react";
-import FactCard from "@/app/components/FactCard";
 import Image from "next/image";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import FactCard from "@/app/components/FactCard";
 
 async function DashboardContent() {
-  // Step 1: Check the authenticated session
   const session = await auth();
 
   if (!session?.user?.email) {
     redirect("/");
   }
 
-  // Step 2: Retrieve the user from PostgreSQL
   const user = await prisma.user.findUnique({
-    where: {
-      email: session.user.email,
-    },
+    where: { email: session.user.email },
     select: {
       name: true,
       email: true,
@@ -30,71 +26,111 @@ async function DashboardContent() {
     redirect("/");
   }
 
-  // Step 3: Check onboarding status
   if (!user.favoriteMovie) {
     redirect("/onboarding");
   }
 
-  // Step 4: Display dashboard
+  const displayName = user.name || "Movie Explorer";
+
   return (
-    <div className="w-full max-w-xl rounded-xl border p-8 shadow-sm">
-      <h1 className="mb-6 text-3xl font-bold">Movie Memory Dashboard</h1>
-
-      {/* Google user profile */}
-      <div className="mb-6 flex items-center gap-4">
-        {user.image ? (
-          <Image
-            src={user.image}
-            alt="Google profile picture"
-            width={64}
-            height={64}
-            className="h-16 w-16 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 text-2xl text-gray-700">
-            {user.name?.charAt(0).toUpperCase() ?? "U"}
+    <main className="min-h-screen bg-slate-50">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-4 sm:px-8">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-xl">
+              🎬
+            </div>
+            <span className="text-lg font-bold tracking-tight text-slate-900">
+              Movie Memory
+            </span>
           </div>
-        )}
 
-        <div>
-          <h2 className="text-xl font-semibold">{user.name ?? "Movie Fan"}</h2>
-          <p className="text-sm text-gray-500">{user.email}</p>
+          <form
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/" });
+            }}
+          >
+            <button
+              type="submit"
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            >
+              Sign out
+            </button>
+          </form>
         </div>
+      </header>
+
+      <div className="mx-auto max-w-4xl space-y-6 px-5 py-10 sm:px-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            Your movie dashboard
+          </h1>
+          <p className="mt-2 text-slate-500">
+            A little movie trivia, just for you.
+          </p>
+        </div>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+          <div className="flex items-center gap-4">
+            {user.image ? (
+              <Image
+                src={user.image}
+                alt={`${displayName}'s profile`}
+                width={56}
+                height={56}
+                className="h-14 w-14 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-xl font-bold text-indigo-700">
+                {displayName.charAt(0).toUpperCase()}
+              </div>
+            )}
+
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {displayName}
+              </h2>
+              <p className="break-all text-sm text-slate-500">{user.email}</p>
+            </div>
+          </div>
+
+          <div className="my-6 border-t border-slate-100" />
+
+          <div className="rounded-xl bg-indigo-50 px-5 py-4">
+            <div className="mb-2 flex items-center gap-2">
+              <span aria-hidden="true">🎞️</span>
+              <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
+                Your favorite movie
+              </p>
+            </div>
+
+            <p className="text-xl font-bold text-slate-900">
+              {user.favoriteMovie}
+            </p>
+          </div>
+        </section>
+
+        <FactCard />
+
+        <p className="text-center text-xs text-slate-400">
+          Made for movie lovers, powered by curiosity.
+        </p>
       </div>
-
-      {/* Favorite movie */}
-      <div className="rounded-lg bg-gray-100 p-4 text-gray-900">
-        <p className="text-sm text-gray-500">Your Favorite Movie</p>
-        <p className="mt-1 text-xl font-semibold">{user.favoriteMovie}</p>
-      </div>
-
-      {/* Existing movie fact component */}
-      <FactCard />
-
-      {/* Logout */}
-      <form
-        action={async () => {
-          "use server";
-          await signOut({ redirectTo: "/" });
-        }}
-      >
-        <button
-          type="submit"
-          className="mt-6 w-full rounded-lg border border-red-500 px-5 py-3 font-medium text-red-600 hover:bg-red-50"
-        >
-          Logout
-        </button>
-      </form>
-    </div>
+    </main>
   );
 }
 
-export default function Dashboard() {
+export default function DashboardPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <Suspense fallback={<p>Loading dashboard...</p>}>
-        <DashboardContent />
-      </Suspense>
-    </main>
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-slate-50">
+          <p className="text-sm text-slate-500">Loading your dashboard...</p>
+        </main>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }

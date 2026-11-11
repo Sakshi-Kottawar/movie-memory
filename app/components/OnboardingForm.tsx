@@ -17,10 +17,13 @@ export default function OnboardingForm() {
   );
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-5">
       <div>
-        <label htmlFor="movie" className="mb-2 block font-medium">
-          Favorite Movie
+        <label
+          htmlFor="movie"
+          className="mb-2 block text-sm font-semibold text-slate-700"
+        >
+          Favorite movie
         </label>
 
         <input
@@ -31,22 +34,39 @@ export default function OnboardingForm() {
           minLength={2}
           maxLength={100}
           placeholder="e.g. Inception"
-          className="w-full rounded-lg border p-3 text-gray-900"
+          aria-describedby={state.error ? "movie-error" : "movie-hint"}
+          aria-invalid={Boolean(state.error)}
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
         />
+
+        <p id="movie-hint" className="mt-2 text-xs text-slate-400">
+          Enter a movie title between 2 and 100 characters.
+        </p>
       </div>
 
       {state.error && (
-        <p role="alert" className="text-sm text-red-600">
+        <div
+          id="movie-error"
+          role="alert"
+          className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {state.error}
-        </p>
+        </div>
       )}
 
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-blue-600 px-4 py-3 text-white disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3.5 font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {pending ? "Saving..." : "Continue to Dashboard"}
+        {pending ? (
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            Saving your movie...
+          </>
+        ) : (
+          "Continue to Dashboard"
+        )}
       </button>
     </form>
   );
