@@ -172,23 +172,71 @@ Vitest covers:
 
 Prisma and OpenAI are mocked in unit tests to keep tests deterministic and avoid external API costs.
 
-## Tradeoffs
+## Design Tradeoffs
 
-| Decision                 | Rationale and limitation                                                                |
-| ------------------------ | --------------------------------------------------------------------------------------- |
-| PostgreSQL-backed cache  | Reuses persisted facts without adding Redis; each lookup requires a database query      |
-| In-memory single-flight  | Lightweight coordination for one process; does not coordinate across multiple instances |
-| Database-backed sessions | Server-managed session persistence at the cost of database access                       |
-| Development mock         | Enables reliable testing without API credits; does not replace live API verification    |
+### 1. PostgreSQL as a Persistent Cache
 
-### With Two More Hours
+**Decision:** Reuse persisted movie facts with a timestamp-based 60-second freshness window.
 
-I would prioritize:
+**Benefit:** Avoids an additional caching dependency and preserves historical facts for failure recovery.
 
-- Database-backed or distributed concurrency coordination
-- Broader API integration tests, including onboarding validation
-- Structured monitoring for cache hits, generation latency, and OpenAI failures
-- Improved accessibility and loading states
+**Tradeoff:** Cache lookups require a database query.
+
+For a larger application, a dedicated cache such as Redis could reduce database reads.
+
+### 2. In-Memory Concurrency Coordination
+
+**Decision:** Use a Promise map to coordinate simultaneous requests for the same user and movie.
+
+**Benefit:** Simple, lightweight, and effective within one application process.
+
+**Tradeoff:** It does not provide coordination across multiple server instances or processes.
+
+A distributed deployment would need a shared coordination mechanism.
+
+### 3. Database-Backed Sessions
+
+**Decision:** Use Auth.js with a Prisma adapter and database sessions.
+
+**Benefit:** Centralized session persistence and server-side control over authentication records.
+
+**Tradeoff:** Session retrieval introduces database access compared with a purely stateless session approach.
+
+### 4. Server-Side Validation and Authorization
+
+**Decision:** Validate movie input and determine user identity on the server.
+
+**Benefit:** Prevents reliance on browser-side validation or untrusted user identifiers.
+
+**Tradeoff:** Server interactions are required for validation and protected data access.
+
+### 5. Mock OpenAI Integration for Development
+
+**Decision:** Support a local mock that can simulate successful generation and failures.
+
+**Benefit:** Enables deterministic testing without external API costs.
+
+**Tradeoff:** Mock tests do not replace live integration testing for credentials, network behavior, quotas, and actual model responses.
+
+---
+
+## What I Would Improve With Two More Hours
+
+Given additional time, I would prioritize:
+
+1. **Multi-instance concurrency guarantees:** Introduce database-backed generation coordination or a distributed lock to prevent duplicate generation across server instances.
+
+2. **Expanded integration tests:** Test authenticated API routes, database persistence, onboarding validation, and cross-user isolation more comprehensively.
+
+3. **Onboarding user experience:** Return inline validation messages instead of displaying generic Server Action errors.
+
+4. **Observability:** Add structured logging and metrics for cache hit rate, OpenAI latency, generation failures, and stale-fact fallback frequency.
+
+5. **Live OpenAI verification:** Validate the real API integration against an account with available credits, including timeout and error scenarios.
+
+These improvements would strengthen production readiness while keeping the take-home implementation intentionally focused.
+
+---
 
 ## AI Usage
 
